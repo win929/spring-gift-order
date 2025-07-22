@@ -34,8 +34,7 @@ public class WishService {
     }
 
     public Page<WishResponseDto> getWishlist(String email, Pageable pageable) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberNotFoundException(email));
+        Member member = findMemberByEmailOrThrow(email);
 
         Page<Wish> wishlistPage = wishRepository.findByMember(member, pageable);
 
@@ -44,32 +43,29 @@ public class WishService {
 
     @Transactional
     public WishResponseDto addProductToWishlist(String email, Long productId) {
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberNotFoundException(email));
+        Member member = findMemberByEmailOrThrow(email);
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
+        Product product = findProductByIdOrThrow(productId);
 
-        wishRepository.findByMemberAndProduct(member, product)
-                .ifPresent(wish -> {
-                    throw new WishDuplicateException(wish.getProduct().getName());
-                });
+        Wish wish = member.addWish(product);
 
-        Wish newWish = new Wish(member, product);
-        Wish savedWish = wishRepository.save(newWish);
-
-        return WishResponseDto.of(savedWish, product);
+        return WishResponseDto.of(wish, product);
     }
 
     @Transactional
     public void removeProductFromWishlist(String email, Long wishId) {
-        Wish wish = wishRepository.findById(wishId)
-                .orElseThrow(() -> new WishNotFoundException(wishId));
+        Member member = findMemberByEmailOrThrow(email);
 
-        if (!wish.getMember().getEmail().equals(email)) {
-            throw new AuthorizationException("해당 위시를 삭제할 권한이 없습니다.");
-        }
+        member.removeWish(wishId);
+    }
 
-        wishRepository.delete(wish);
+    private Member findMemberByEmailOrThrow(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new MemberNotFoundException(email));
+    }
+
+    private Product findProductByIdOrThrow(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
     }
 }

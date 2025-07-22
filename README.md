@@ -723,7 +723,6 @@ alter table wish
 
 ### AuthorizationException `403 Forbidden`
 - 인증된 사용자 (로그인한 경우) 권한이 없는 요청
-  - 다른 사용자의 위시 리스트 삭제
   - 일반 사용자가 관리자 권한이 필요한 행위 요청
 
 ### MethodArgumentNotValidException `400 Bad Request`

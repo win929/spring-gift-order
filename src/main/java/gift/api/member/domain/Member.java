@@ -1,6 +1,9 @@
 package gift.api.member.domain;
 
+import gift.api.product.domain.Product;
 import gift.api.wish.domain.Wish;
+import gift.exception.conflict.WishDuplicateException;
+import gift.exception.notfound.WishNotFoundException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -58,5 +61,25 @@ public class Member {
 
     public MemberRole getRole() {
         return role;
+    }
+
+    public Wish addWish(Product product) {
+        if (this.wishList.stream().anyMatch(wish -> wish.getProduct().equals(product))) {
+            throw new WishDuplicateException(product.getName());
+        }
+
+        Wish newWish = new Wish(this, product);
+        this.wishList.add(newWish);
+
+        return newWish;
+    }
+
+    public void removeWish(Long wishId) {
+        Wish wishToRemove = this.wishList.stream()
+                .filter(wish -> wish.getId().equals(wishId))
+                .findFirst()
+                .orElseThrow(() -> new WishNotFoundException(wishId));
+
+        this.wishList.remove(wishToRemove);
     }
 }

@@ -173,7 +173,7 @@ public class ProductOptionE2ETest {
                 });
 
         assertThat(options).hasSize(1); // 기본 옵션만 남아야 합니다.
-        assertThat(options.get(0).name()).isEqualTo("기본 옵션");
+        assertThat(options.getFirst().name()).isEqualTo("기본 옵션");
     }
 
     @Test

@@ -1,6 +1,9 @@
 package gift.api.product.domain;
 
 import gift.api.option.domain.Option;
+import gift.exception.conflict.OptionNameDuplicateException;
+import gift.exception.notfound.OptionNotFoundException;
+import gift.exception.option.OptionPolicyException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -67,11 +70,49 @@ public class Product {
         this.imageUrl = imageUrl;
     }
 
-    public void addOption(Option option) {
-        options.add(option);
+    public Option addOption(String name, int quantity) {
+        validateOptionNameDuplicate(name);
+
+        Option newOption = new Option(name, quantity, this);
+        this.options.add(newOption);
+
+        return newOption;
     }
 
-    public void clearOptions() {
-        this.options.clear();
+    public Option updateOption(Long optionId, String name, int quantity) {
+        Option optionToUpdate = this.options.stream()
+                .filter(option -> option.getId().equals(optionId))
+                .findFirst()
+                .orElseThrow(() -> new OptionNotFoundException(optionId));
+
+        if (!optionToUpdate.getName().equals(name)) {
+            validateOptionNameDuplicate(name);
+        }
+
+        optionToUpdate.update(name, quantity);
+
+        return optionToUpdate;
+    }
+
+    public void removeOption(Long optionId) {
+        if (this.options.size() <= 1) {
+            throw new OptionPolicyException("상품에는 최소 1개의 옵션이 존재해야 합니다.");
+        }
+
+        Option optionToRemove = this.options.stream()
+                .filter(option -> option.getId().equals(optionId))
+                .findFirst()
+                .orElseThrow(() -> new OptionNotFoundException(optionId));
+
+        this.options.remove(optionToRemove);
+    }
+
+    private void validateOptionNameDuplicate(String name) {
+        boolean isDuplicate = this.options.stream()
+                .anyMatch(option -> option.getName().equals(name));
+
+        if (isDuplicate) {
+            throw new OptionNameDuplicateException(name);
+        }
     }
 }

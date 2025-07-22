@@ -50,10 +50,9 @@ public class ProductService {
                 productRequestDto.imageUrl()
         );
 
-        Product savedProduct = productRepository.save(createdProduct);
+        createdProduct.addOption("기본 옵션", 1);
 
-        Option defaultOption = new Option("기본 옵션", 1, savedProduct);
-        optionRepository.save(defaultOption);
+        Product savedProduct = productRepository.save(createdProduct);
 
         return ProductResponseDto.from(savedProduct);
     }
@@ -82,9 +81,9 @@ public class ProductService {
     }
 
     public List<OptionResponseDto> getOptionsByProductId(Long productId) {
-        findProductByIdOrThrow(productId);
+        Product product = findProductByIdOrThrow(productId);
 
-        return optionRepository.findByProductId(productId).stream()
+        return product.getOptions().stream()
                 .map(OptionResponseDto::from)
                 .collect(Collectors.toList());
     }
@@ -93,12 +92,9 @@ public class ProductService {
     public OptionResponseDto addOption(Long productId, OptionRequestDto requestDto) {
         Product product = findProductByIdOrThrow(productId);
 
-        validateOptionNameDuplicate(product, requestDto.name());
+        Option newOption = product.addOption(requestDto.name(), requestDto.quantity());
 
-        Option newOption = new Option(requestDto.name(), requestDto.quantity(), product);
-        Option savedOption = optionRepository.save(newOption);
-
-        return OptionResponseDto.from(savedOption);
+        return OptionResponseDto.from(newOption);
     }
 
     @Transactional
@@ -106,49 +102,20 @@ public class ProductService {
             OptionRequestDto requestDto) {
         Product product = findProductByIdOrThrow(productId);
 
-        Option option = findOptionByIdOrThrow(optionId);
+        Option updatedOption = product.updateOption(optionId, requestDto.name(), requestDto.quantity());
 
-        option.validateProduct(productId);
-
-        // 수정하려는 이름이 현재 이름과 다른 경우, 기존 옵션 이름과 중복 검사
-        if (!option.getName().equals(requestDto.name())) {
-            validateOptionNameDuplicate(product, requestDto.name());
-        }
-
-        option.update(requestDto.name(), requestDto.quantity());
-
-        return OptionResponseDto.from(option);
+        return OptionResponseDto.from(updatedOption);
     }
 
     @Transactional
     public void deleteOption(Long productId, Long optionId) {
         Product product = findProductByIdOrThrow(productId);
 
-        Option option = findOptionByIdOrThrow(optionId);
-
-        option.validateProduct(productId);
-
-        if (option.getProduct().getOptions().size() <= 1) {
-            throw new OptionPolicyException("상품에는 최소 1개의 옵션이 존재해야 합니다.");
-        }
-
-        // 부모의 관리 목록에서 자식을 빼는 방식
-        product.getOptions().remove(option);
-    }
-
-    private void validateOptionNameDuplicate(Product product, String optionName) {
-        optionRepository.findByProductAndName(product, optionName).ifPresent(opt -> {
-            throw new OptionNameDuplicateException(optionName);
-        });
+        product.removeOption(optionId);
     }
 
     private Product findProductByIdOrThrow(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
-    }
-
-    private Option findOptionByIdOrThrow(Long optionId) {
-        return optionRepository.findById(optionId)
-                .orElseThrow(() -> new OptionNotFoundException(optionId));
     }
 }

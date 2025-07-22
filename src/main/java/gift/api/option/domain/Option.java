@@ -59,12 +59,6 @@ public class Option {
         return product;
     }
 
-    public void validateProduct(Long productId) {
-        if (!this.product.getId().equals(productId)) {
-            throw new InvalidOptionAccessException("해당 상품에 속한 옵션이 아닙니다.");
-        }
-    }
-
     public void update(String name, int quantity) {
         this.name = name;
         this.quantity = quantity;
