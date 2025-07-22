@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('로그인', ~{::#content}, null)}">
+<div id="content">
+  <div class="form-container">
+    <form id="login-form" action="/api/members/login" method="post">
+      <div class="form-group">
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" required/>
+      </div>
+      <div class="form-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" required/>
+      </div>
+      <div class="buttons">
+        <button type="submit">로그인</button>
+        <a href="/members/register" class="button">회원가입</a>
+      </div>
+    </form>
+  </div>
+</div>
+</html>

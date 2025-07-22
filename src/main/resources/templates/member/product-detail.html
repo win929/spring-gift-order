@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('상품 상세정보', ~{::#content}, null)}">
+<div id="content">
+  <div class="product-detail">
+    <img th:src="${product.imageUrl}" alt="상품 이미지" width="200"/>
+    <p><strong>상품명:</strong> <span th:text="${product.name}"></span></p>
+    <p><strong>가격:</strong> <span th:text="${product.price}"></span>원</p>
+
+    <div class="options-display" style="margin-top: 20px; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+      <h4>선택 가능한 옵션</h4>
+      <ul style="list-style: none; padding: 0;">
+        <li th:each="option : ${options}" style="padding: 8px 0; border-bottom: 1px solid #eee;">
+          <span th:text="${option.name}"></span>
+          <span th:if="${option.quantity > 0}" th:text="'(' + ${option.quantity} + '개 남음)'" style="color: #666; font-size: 0.9em; margin-left: 10px;"></span>
+          <span th:if="${option.quantity <= 0}" style="color: red; font-size: 0.9em; margin-left: 10px;">(품절)</span>
+        </li>
+        <li th:if="${#lists.isEmpty(options)}" style="padding: 8px 0;">
+          선택 가능한 옵션이 없습니다.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="history.back()" class="button">목록으로</button>
+  </div>
+</div>
+</html>

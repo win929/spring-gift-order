@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html th:fragment="layout (title, content, bodyClass)" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${title}">Spring Gift</title>
+  <link rel="stylesheet" th:href="@{/css/kakao-style.css}">
+</head>
+<body th:classappend="${bodyClass}">
+
+<div class="main-container">
+  <h1 th:text="${title}"></h1>
+
+  <th:block th:replace="${content}"></th:block>
+
+</div>
+
+<script th:src="@{/js/common.js}"></script>
+</body>
+</html>

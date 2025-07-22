@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('상품 등록', ~{::#content}, 'admin-page')}">
+<div id="content">
+  <div class="form-container">
+    <form th:action="@{/admin/products}" th:object="${product}" method="post">
+      <div class="form-group"><label for="name">상품명</label><input type="text" id="name" th:field="*{name}" required/></div>
+      <div class="form-group"><label for="price">가격</label><input type="number" id="price" th:field="*{price}" min="0" required/></div>
+      <div class="form-group"><label for="imageUrl">이미지 URL</label><input type="text" id="imageUrl" th:field="*{imageUrl}" required/></div>
+      <div class="buttons">
+        <button type="submit">등록</button>
+        <a href="/admin/products" class="button">취소</a>
+      </div>
+    </form>
+  </div>
+</div>
+</html>

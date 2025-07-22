@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('상품 목록', ~{::#content}, null)}">
+<div id="content">
+  <div class="top-bar">
+    <div class="user-info">
+      <span th:text="${userEmail}">user@example.com</span>님, 환영합니다!
+    </div>
+    <form th:action="@{/members/products}" method="get" class="sort-form">
+      <select name="sort" onchange="this.form.submit()">
+        <option value="id,asc" th:selected="${sort == 'id,asc'}">오래된순</option>
+        <option value="id,desc" th:selected="${sort == 'id,desc'}">최신순</option>
+        <option value="name,asc" th:selected="${sort == 'name,asc'}">이름 오름차순</option>
+        <option value="name,desc" th:selected="${sort == 'name,desc'}">이름 내림차순</option>
+        <option value="price,asc" th:selected="${sort == 'price,asc'}">가격 오름차순</option>
+        <option value="price,desc" th:selected="${sort == 'price,desc'}">가격 내림차순</option>
+      </select>
+    </form>
+    <a href="/members/wishes" class="button">🎁 내 위시리스트</a>
+    <a href="/admin/products" class="button admin-button"
+       th:if="${#strings.equals(userRole, 'ADMIN')}">관리자 페이지</a>
+    <a href="/members/logout" class="button">로그아웃</a>
+  </div>
+
+  <table>
+    <thead>
+    <tr>
+      <th>상품명</th>
+      <th>가격</th>
+      <th>이미지</th>
+      <th>위시 추가</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:if="${products.empty}">
+      <td colspan="4">등록된 상품이 없습니다.</td>
+    </tr>
+
+    <tr th:each="product : ${products}">
+      <td class="clickable-row" th:data-id="${product.id}"
+          th:data-link="@{/members/products/{id}(id=${product.id})}" th:text="${product.name}">상품명
+      </td>
+      <td class="clickable-row" th:data-id="${product.id}"
+          th:data-link="@{/members/products/{id}(id=${product.id})}" th:text="${product.price}">가격
+      </td>
+      <td class="clickable-row" th:data-id="${product.id}"
+          th:data-link="@{/members/products/{id}(id=${product.id})}">
+        <img th:src="${product.imageUrl}" alt="이미지 없음"/>
+      </td>
+      <td>
+        <button class="add-to-wish-btn" th:data-product-id="${product.id}">추가</button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination" th:if="${!products.empty}">
+        <span th:if="${products.hasPrevious()}">
+            <a th:href="@{/members/products(page=${products.number - 1}, sort=${sort})}">&laquo; 이전</a>
+        </span>
+    <span>페이지 <b th:text="${products.number + 1}"></b> / <b
+        th:text="${products.totalPages}"></b></span>
+    <span th:if="${products.hasNext()}">
+            <a th:href="@{/members/products(page=${products.number + 1}, sort=${sort})}">다음 &raquo;</a>
+        </span>
+  </div>
+</div>
+</html>

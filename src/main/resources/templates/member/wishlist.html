@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('내 위시리스트', ~{::#content}, null)}">
+<div id="content">
+  <div class="top-bar">
+    <div class="user-info">
+      <span th:text="${userEmail}">user@example.com</span>님, 환영합니다!
+    </div>
+    <form th:action="@{/members/wishes}" method="get" class="sort-form">
+      <select name="sort" onchange="this.form.submit()">
+        <option value="createdDate,desc" th:selected="${sort == 'createdDate,desc'}">최신순</option>
+        <option value="createdDate,asc" th:selected="${sort == 'createdDate,asc'}">오래된순</option>
+        <option value="product.name,asc" th:selected="${sort == 'product.name,asc'}">이름 오름차순</option>
+        <option value="product.name,desc" th:selected="${sort == 'product.name,desc'}">이름 내림차순</option>
+        <option value="product.price,asc" th:selected="${sort == 'product.price,asc'}">가격 오름차순</option>
+        <option value="product.price,desc" th:selected="${sort == 'product.price,desc'}">가격 내림차순</option>
+      </select>
+    </form>
+    <a href="/members/products" class="button">상품 목록으로</a>
+    <a href="/members/logout" class="button">로그아웃</a>
+  </div>
+
+  <table>
+    <thead>
+    <tr>
+      <th>상품명</th>
+      <th>가격</th>
+      <th>이미지</th>
+      <th>관리</th>
+    </tr>
+    </thead>
+    <tbody id="wishlist-body">
+    <tr th:if="${wishlistPage.empty}">
+      <td colspan="4">위시리스트에 담긴 상품이 없습니다.</td>
+    </tr>
+    <tr th:each="wish : ${wishlistPage.content}">
+      <td class="clickable-row" th:data-link="@{/members/products/{id}(id=${wish.product.id})}"
+          th:text="${wish.product.name}">상품명</td>
+      <td class="clickable-row" th:data-link="@{/members/products/{id}(id=${wish.product.id})}"
+          th:text="${wish.product.price} + '원'">가격</td>
+      <td class="clickable-row" th:data-link="@{/members/products/{id}(id=${wish.product.id})}">
+        <img th:src="${wish.product.imageUrl}" alt="이미지 없음"/>
+      </td>
+      <td>
+        <form th:action="@{/members/wishes/{id}(id=${wish.id})}" method="post"
+              class="delete-form">
+          <input type="hidden" name="_method" value="delete"/>
+          <button type="submit">삭제</button>
+        </form>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination" th:if="${!wishlistPage.empty}">
+    <span th:if="${wishlistPage.hasPrevious()}">
+        <a th:href="@{/members/wishes(page=${wishlistPage.number - 1}, sort=${sort})}">&laquo; 이전</a>
+    </span>
+    <span>페이지 <b th:text="${wishlistPage.number + 1}"></b> / <b
+        th:text="${wishlistPage.totalPages}"></b></span>
+    <span th:if="${wishlistPage.hasNext()}">
+        <a th:href="@{/members/wishes(page=${wishlistPage.number + 1}, sort=${sort})}">다음 &raquo;</a>
+    </span>
+  </div>
+</div>
+</html>

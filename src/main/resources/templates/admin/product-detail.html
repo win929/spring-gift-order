@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('상품 상세 정보', ~{::#content}, 'admin-page')}">
+<div id="content">
+  <div class="product-detail">
+    <img th:src="${product.imageUrl}" alt="상품 이미지" width="200"/>
+    <p><strong>상품명:</strong> <span th:text="${product.name}"></span></p>
+    <p><strong>가격:</strong> <span th:text="${product.price}"></span>원</p>
+  </div>
+  <hr/>
+  <div class="options-management">
+    <h4>옵션 관리</h4>
+    <form id="add-option-form" th:attr="data-product-id=${product.id}" onsubmit="return false;">
+      <table>
+        <thead>
+        <tr><th>옵션명</th><th>재고 수량</th><th>관리</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="option : ${options}">
+          <td><input type="text" th:id="'name-' + ${option.id}" th:value="${option.name}" required></td>
+          <td><input type="number" th:id="'quantity-' + ${option.id}" th:value="${option.quantity}" min="1" required></td>
+          <td>
+            <button type="button" th:onclick="|updateOption(${product.id}, ${option.id})|">수정</button>
+            <button type="button" th:onclick="|deleteOption(${product.id}, ${option.id})|">삭제</button>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr>
+          <td><input type="text" name="name" placeholder="새 옵션명" required></td>
+          <td><input type="number" name="quantity" placeholder="새 수량" min="1" required></td>
+          <td><button type="submit">추가하기</button></td>
+        </tr>
+        </tfoot>
+      </table>
+    </form>
+  </div>
+  <div class="buttons">
+    <a th:href="@{/admin/products/edit/{id}(id=${product.id})}" class="button">상품 정보 수정</a>
+    <a href="/admin/products" class="button">목록으로</a>
+  </div>
+</div>
+</html>

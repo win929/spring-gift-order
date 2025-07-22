@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/layout :: layout('오류 발생', ~{::#content}, null)}">
+<div id="content">
+  <div class="product-detail">
+    <h1>⚠ 오류가 발생했습니다</h1>
+
+    <div class="error-message-box">
+      <span class="status" th:text="'[' + ${errorInfo?.status} + ' ' + ${errorInfo?.error} + ']'">[404 Not Found]</span>
+      <span class="message" th:text="${errorInfo?.message}">예기치 않은 문제가 발생했습니다.</span>
+    </div>
+
+    <div class="buttons">
+      <button onclick="history.back()" class="button">돌아가기</button>
+    </div>
+  </div>
+</div>
+</html>
