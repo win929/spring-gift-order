@@ -89,7 +89,7 @@ public class ProductOptionE2ETest {
         // then
         assertThat(options).isNotNull();
         assertThat(options).hasSize(1); // 기본 옵션
-        assertThat(options.get(0).name()).isEqualTo("기본 옵션");
+        assertThat(options.getFirst().name()).isEqualTo("기본 옵션");
     }
 
     @Test
@@ -187,13 +187,11 @@ public class ProductOptionE2ETest {
                 .single();
 
         // when
-        Throwable thrown = catchThrowable(() -> {
-            restClient.delete()
-                    .uri("/api/products/{productId}/options/{optionId}", productId, optionId)
-                    .header("Authorization", authToken)
-                    .retrieve()
-                    .toBodilessEntity();
-        });
+        Throwable thrown = catchThrowable(() -> restClient.delete()
+                .uri("/api/products/{productId}/options/{optionId}", productId, optionId)
+                .header("Authorization", authToken)
+                .retrieve()
+                .toBodilessEntity());
 
         // then
         assertThat(thrown)

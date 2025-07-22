@@ -65,8 +65,7 @@ public class MemberRepositoryTest {
                 MemberRole.USER
         );
 
-        assertThatThrownBy(() -> {
-            memberRepository.saveAndFlush(member2);
-        }).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> memberRepository.saveAndFlush(member2)).
+                isInstanceOf(DataIntegrityViolationException.class);
     }
 }

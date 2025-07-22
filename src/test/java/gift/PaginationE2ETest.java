@@ -146,8 +146,8 @@ public class PaginationE2ETest {
                 });
 
         assertThat(sortedByPrice).hasSize(3);
-        assertThat(sortedByPrice.get(0).name()).isEqualTo("Test Product 10");
-        assertThat(sortedByPrice.get(0).price()).isEqualTo(10000L);
+        assertThat(sortedByPrice.getFirst().name()).isEqualTo("Test Product 10");
+        assertThat(sortedByPrice.getFirst().price()).isEqualTo(10000L);
     }
 
     @Test

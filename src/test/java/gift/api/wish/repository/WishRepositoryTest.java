@@ -93,9 +93,8 @@ public class WishRepositoryTest {
         entityManager.flush();
 
         Wish wish2 = new Wish(member, product1);
-        assertThatThrownBy(() -> {
-            wishRepository.saveAndFlush(wish2);
-        }).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> wishRepository.saveAndFlush(wish2))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
