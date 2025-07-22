@@ -1,7 +1,6 @@
 package gift.api.option.domain;
 
 import gift.api.product.domain.Product;
-import gift.exception.option.InvalidOptionAccessException;
 import gift.exception.option.InvalidOptionQuantityException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -57,6 +56,10 @@ public class Option {
 
     public Product getProduct() {
         return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
     public void update(String name, int quantity) {

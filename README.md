@@ -741,25 +741,18 @@ alter table wish
 ---
 
 <details>
-<summary>API 테스트</summary>
-
-- 상품 조회 (전체 상품)
-- 상품 조회 (특정 상품)
-- 상품 추가
-- 상품 수정
-- 상품 삭제
-
-</details>
-<details>
 <summary>E2E 테스트</summary>
 
 - AuthE2ETest
   - 관리자/일반 사용자 로그인, 페이지 접근 권한 등 인증/인가 테스트
-- ProductOptionE2ETest
-  - 상품 조회, 추가, 수정, 삭제 및 유효성 검사(이름 길이, 특수문자, 가격) 테스트
-  - 상품 옵션 조회, 추가, 수정, 삭제 및 유효성 검사(이름 길이, 특수문자) 테스트
 - PaginationE2ETest
   - 관리자/사용자 상품 목록, 위시리스트의 페이지네이션 및 정렬 기능 테스트
+</details>
+<details>
+<summary>Domain 테스트</summary>
+
+- OptionTest
+  - 옵션 삭제 테스트
 </details>
 <details>
 <summary>Repository 테스트</summary>
@@ -768,8 +761,6 @@ alter table wish
   - 회원 정보 저장 및 이메일 중복 조회
 - ProductRepositoryTest
   - 상품 CRUD 기능 테스트
-- OptionRepositoryTest
-  - 상품별 옵션 조회 및 이름 중복 저장 테스트
 - WishRepositoryTest
   - 위시리스트 저장, 조회 및 중복 저장 방지 테스트
 </details>

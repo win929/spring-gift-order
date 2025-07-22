@@ -3,15 +3,11 @@ package gift.api.product.service;
 import gift.api.option.domain.Option;
 import gift.api.option.dto.OptionRequestDto;
 import gift.api.option.dto.OptionResponseDto;
-import gift.api.option.repository.OptionRepository;
 import gift.api.product.domain.Product;
 import gift.api.product.dto.ProductRequestDto;
 import gift.api.product.dto.ProductResponseDto;
 import gift.api.product.repository.ProductRepository;
-import gift.exception.conflict.OptionNameDuplicateException;
-import gift.exception.notfound.OptionNotFoundException;
 import gift.exception.notfound.ProductNotFoundException;
-import gift.exception.option.OptionPolicyException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -24,11 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final OptionRepository optionRepository;
 
-    public ProductService(ProductRepository productRepository, OptionRepository optionRepository) {
+    public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-        this.optionRepository = optionRepository;
     }
 
     public Page<ProductResponseDto> findAllProducts(Pageable pageable) {
@@ -36,8 +30,7 @@ public class ProductService {
     }
 
     public ProductResponseDto findProductById(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+        Product product = findProductByIdOrThrow(id);
 
         return ProductResponseDto.from(product);
     }
@@ -59,8 +52,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponseDto updateProduct(Long id, ProductRequestDto productRequestDto) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+        Product product = findProductByIdOrThrow(id);
 
         product.update(
                 productRequestDto.name(),
@@ -102,7 +94,8 @@ public class ProductService {
             OptionRequestDto requestDto) {
         Product product = findProductByIdOrThrow(productId);
 
-        Option updatedOption = product.updateOption(optionId, requestDto.name(), requestDto.quantity());
+        Option updatedOption = product.updateOption(optionId, requestDto.name(),
+                requestDto.quantity());
 
         return OptionResponseDto.from(updatedOption);
     }

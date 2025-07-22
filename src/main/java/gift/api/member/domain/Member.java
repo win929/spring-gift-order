@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -61,6 +62,10 @@ public class Member {
 
     public MemberRole getRole() {
         return role;
+    }
+
+    public List<Wish> getWishList() {
+        return Collections.unmodifiableList(wishList);
     }
 
     public Wish addWish(Product product) {

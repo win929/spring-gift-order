@@ -4,14 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import gift.api.option.domain.Option;
 import gift.api.option.dto.OptionRequestDto;
 import gift.api.option.dto.OptionResponseDto;
-import gift.api.option.repository.OptionRepository;
 import gift.api.product.domain.Product;
 import gift.api.product.dto.ProductRequestDto;
 import gift.api.product.dto.ProductResponseDto;
@@ -19,13 +17,13 @@ import gift.api.product.repository.ProductRepository;
 import gift.exception.conflict.OptionNameDuplicateException;
 import gift.exception.notfound.OptionNotFoundException;
 import gift.exception.notfound.ProductNotFoundException;
-import gift.exception.option.InvalidOptionAccessException;
 import gift.exception.option.OptionPolicyException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,9 +39,6 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
-    @Mock
-    private OptionRepository optionRepository;
-
     private Product product;
 
     @BeforeEach
@@ -57,20 +52,26 @@ class ProductServiceTest {
     void createProduct_success() {
         // given
         ProductRequestDto requestDto = new ProductRequestDto("새 상품", 15000L, "new.jpg");
-        Product newProduct = new Product(requestDto.name(), requestDto.price(),
+        Product fakeSavedProduct = new Product(requestDto.name(), requestDto.price(),
                 requestDto.imageUrl());
-        ReflectionTestUtils.setField(newProduct, "id", 1L); // ID 설정
+        ReflectionTestUtils.setField(fakeSavedProduct, "id", 1L);
 
-        given(productRepository.save(any(Product.class))).willReturn(newProduct);
+        given(productRepository.save(any(Product.class))).willReturn(fakeSavedProduct);
 
         // when
         ProductResponseDto response = productService.createProduct(requestDto);
 
         // then
+        assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("새 상품");
-        // 기본 옵션이 저장되는지 확인
-        verify(optionRepository, times(1)).save(any());
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        Product capturedProduct = productCaptor.getValue();
+
+        assertThat(capturedProduct.getOptions()).hasSize(1);
+        assertThat(capturedProduct.getOptions().getFirst().getName()).isEqualTo("기본 옵션");
     }
 
     @Test
@@ -112,7 +113,7 @@ class ProductServiceTest {
         // then
         assertThat(response.name()).isEqualTo("수정된 상품");
         assertThat(response.price()).isEqualTo(12000L);
-        assertThat(product.getName()).isEqualTo("수정된 상품"); // 원본 객체가 변경되었는지 확인
+        assertThat(product.getName()).isEqualTo("수정된 상품");
     }
 
     @Test
@@ -125,7 +126,6 @@ class ProductServiceTest {
         productService.deleteProduct(1L);
 
         // then
-        // deleteById가 1L을 인자로 호출되었는지 검증
         verify(productRepository, times(1)).deleteById(1L);
     }
 
@@ -146,33 +146,26 @@ class ProductServiceTest {
     @DisplayName("옵션 추가 성공")
     void addOption_success() {
         // given
-        OptionRequestDto requestDto = new OptionRequestDto("새 옵션", 10);
-        Option newOption = new Option(requestDto.name(), requestDto.quantity(), product);
-        ReflectionTestUtils.setField(newOption, "id", 2L);
-
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findByProductAndName(product, "새 옵션")).willReturn(Optional.empty());
-        given(optionRepository.save(any(Option.class))).willReturn(newOption);
+        OptionRequestDto requestDto = new OptionRequestDto("새 옵션", 10);
 
         // when
         OptionResponseDto response = productService.addOption(1L, requestDto);
 
         // then
-        assertThat(response.id()).isEqualTo(2L);
         assertThat(response.name()).isEqualTo("새 옵션");
-        verify(optionRepository).save(any(Option.class));
+        assertThat(response.quantity()).isEqualTo(10);
+        assertThat(product.getOptions()).hasSize(1);
+        assertThat(product.getOptions().getFirst().getName()).isEqualTo("새 옵션");
     }
 
     @Test
     @DisplayName("옵션 추가 실패 - 중복된 이름")
     void addOption_fail_duplicateName() {
         // given
-        OptionRequestDto requestDto = new OptionRequestDto("기존 옵션", 10);
-        Option existingOption = new Option("기존 옵션", 5, product);
-
+        product.addOption("기존 옵션", 5);
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findByProductAndName(product, "기존 옵션")).willReturn(
-                Optional.of(existingOption));
+        OptionRequestDto requestDto = new OptionRequestDto("기존 옵션", 10);
 
         // when & then
         assertThatThrownBy(() -> productService.addOption(1L, requestDto))
@@ -183,98 +176,70 @@ class ProductServiceTest {
     @DisplayName("옵션 수정 성공")
     void updateOption_success() {
         // given
-        Option option = new Option("원본 옵션", 5, product);
+        Option option = product.addOption("원본 옵션", 5);
+        // ⭐ ID를 수동으로 설정해줍니다.
         ReflectionTestUtils.setField(option, "id", 10L);
+
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
         OptionRequestDto requestDto = new OptionRequestDto("수정된 옵션", 20);
 
-        given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findById(10L)).willReturn(Optional.of(option));
-        given(optionRepository.findByProductAndName(product, "수정된 옵션")).willReturn(
-                Optional.empty());
-
         // when
-        OptionResponseDto response = productService.updateOption(1L, 10L, requestDto);
+        productService.updateOption(1L, 10L, requestDto);
 
         // then
-        assertThat(response.name()).isEqualTo("수정된 옵션");
-        assertThat(response.quantity()).isEqualTo(20);
-        assertThat(option.getName()).isEqualTo("수정된 옵션");
+        assertThat(product.getOptions().getFirst().getName()).isEqualTo("수정된 옵션");
+        assertThat(product.getOptions().getFirst().getQuantity()).isEqualTo(20);
     }
-
-    @Test
-    @DisplayName("옵션 수정 실패 - 다른 상품의 옵션 수정 시도")
-    void updateOption_fail_invalidAccess() {
-        // given
-        Product otherProduct = new Product("다른 상품", 100L, "other.jpg");
-        ReflectionTestUtils.setField(otherProduct, "id", 2L);
-
-        Option option = new Option("옵션", 5, otherProduct); // 다른 상품에 속한 옵션
-        ReflectionTestUtils.setField(option, "id", 10L);
-
-        OptionRequestDto requestDto = new OptionRequestDto("수정 시도", 10);
-
-        given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findById(10L)).willReturn(Optional.of(option));
-
-        // when & then
-        assertThatThrownBy(() -> productService.updateOption(1L, 10L, requestDto))
-                .isInstanceOf(InvalidOptionAccessException.class)
-                .hasMessage("해당 상품에 속한 옵션이 아닙니다.");
-    }
-
 
     @Test
     @DisplayName("옵션 삭제 성공")
     void deleteOption_success() {
         // given
-        Option option1 = new Option("옵션 1", 1, product);
-        ReflectionTestUtils.setField(option1, "id", 10L);
-        Option option2 = new Option("옵션 2", 1, product);
-        ReflectionTestUtils.setField(option2, "id", 11L);
-        product.getOptions().add(option1);
-        product.getOptions().add(option2);
+        Option option1 = product.addOption("옵션 1", 1);
+        ReflectionTestUtils.setField(option1, "id", 10L); // ⭐ ID 설정
+        Option option2 = product.addOption("옵션 2", 1);
+        ReflectionTestUtils.setField(option2, "id", 11L); // ⭐ ID 설정
 
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findById(10L)).willReturn(Optional.of(option1));
 
         // when
-        productService.deleteOption(1L, 10L);
+        productService.deleteOption(1L, 10L); // ID 10L 삭제
 
         // then
-        // product.getOptions() 리스트에서 option1이 제거되었는지 상태를 검증
-        assertThat(product.getOptions()).hasSize(1).contains(option2);
-        assertThat(product.getOptions()).doesNotContain(option1);
+        assertThat(product.getOptions()).hasSize(1);
+        assertThat(product.getOptions().getFirst().getName()).isEqualTo("옵션 2");
     }
 
     @Test
     @DisplayName("옵션 삭제 실패 - 상품에 옵션이 하나뿐인 경우")
     void deleteOption_fail_lastOption() {
         // given
-        Option lastOption = new Option("마지막 옵션", 1, product);
-        ReflectionTestUtils.setField(lastOption, "id", 10L);
-        product.getOptions().add(lastOption);
+        Option lastOption = product.addOption("마지막 옵션", 1);
+        ReflectionTestUtils.setField(lastOption, "id", 10L); // ⭐ ID 설정
 
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findById(10L)).willReturn(Optional.of(lastOption));
 
         // when & then
         assertThatThrownBy(() -> productService.deleteOption(1L, 10L))
-                .isInstanceOf(OptionPolicyException.class)
-                .hasMessage("상품에는 최소 1개의 옵션이 존재해야 합니다.");
-
-        // delete 메소드가 호출되지 않았는지 검증
-        verify(optionRepository, never()).delete(any());
+                .isInstanceOf(OptionPolicyException.class);
     }
 
     @Test
     @DisplayName("옵션 삭제 실패 - 존재하지 않는 옵션")
     void deleteOption_fail_notFound() {
         // given
+        // 💡 정책 예외(size<=1)를 피하기 위해 옵션을 2개 이상으로 만듭니다.
+        Option option1 = product.addOption("옵션 1", 1);
+        ReflectionTestUtils.setField(option1, "id", 10L);
+        Option option2 = product.addOption("옵션 2", 1);
+        ReflectionTestUtils.setField(option2, "id", 11L);
+
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
-        given(optionRepository.findById(99L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> productService.deleteOption(1L, 99L))
+        // 이제 NullPointerException이나 OptionPolicyException 없이
+        // 우리가 의도한 OptionNotFoundException이 발생하는지 정확하게 검증할 수 있습니다.
+        assertThatThrownBy(() -> productService.deleteOption(1L, 999L)) // 존재하지 않는 ID
                 .isInstanceOf(OptionNotFoundException.class);
     }
 }

@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -61,7 +62,7 @@ public class Product {
     }
 
     public List<Option> getOptions() {
-        return options;
+        return Collections.unmodifiableList(options);
     }
 
     public void update(String name, Long price, String imageUrl) {
@@ -75,6 +76,7 @@ public class Product {
 
         Option newOption = new Option(name, quantity, this);
         this.options.add(newOption);
+        newOption.setProduct(this);
 
         return newOption;
     }
